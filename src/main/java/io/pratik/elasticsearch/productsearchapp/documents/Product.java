@@ -1,5 +1,6 @@
 package io.pratik.elasticsearch.productsearchapp.documents;
 
+import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
@@ -10,6 +11,7 @@ import org.springframework.data.elasticsearch.annotations.FieldType;
  * Date: 6/9/2021 8:23 PM
  */
 @Document(indexName = "productindex")
+@Data
 public class Product {
 
     @Id
