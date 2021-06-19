@@ -2,6 +2,7 @@ package io.pratik.elasticsearch.productsearchapp.services;
 
 import io.pratik.elasticsearch.productsearchapp.documents.Product;
 import lombok.extern.slf4j.Slf4j;
+import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
@@ -12,6 +13,7 @@ import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.*;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,8 +56,8 @@ public class ProductSearchService {
         return documentId;
     }
 
-    public List<SearchHit<Product>> findProductsByBrand(final String brandName) {
-
+    public List<Product> findProductsByBrand(final String brandName) {
+        List<Product> productMatches = new ArrayList<>();
         QueryBuilder queryBuilder = QueryBuilders.matchQuery("manufacturer", brandName);
 
         Query searchQuery = new NativeSearchQueryBuilder()
@@ -67,23 +69,60 @@ public class ProductSearchService {
                                 Product.class,
                                 IndexCoordinates.of(PRODUCT_INDEX));
 
-        return productHits.toList();
+        productHits.forEach(searchHit->{
+            productMatches.add(searchHit.getContent());
+        });
+        return productMatches;
     }
 
     /*Criteria */
-    public List<SearchHit<Product>> findProductsByBrandByCriteria(final String brandName) {
-        Query searchQuery = new CriteriaQuery();
+    public List<Product> findProductsByBrandByCriteria(final String brandName) {
 
-        if(brandName != null) {
-            Criteria criteria = new Criteria("manufacturer").is(brandName);
-            searchQuery = new CriteriaQuery(criteria);
+        List<Product> productMatches = new ArrayList<>();
+        if(brandName == null) {
+            return productMatches;
         }
+
+        Criteria criteria = new Criteria("manufacturer").is(brandName);
+        Query searchQuery = new CriteriaQuery(criteria);
 
         SearchHits<Product> productHits = elasticsearchOperations
                             .search(searchQuery,
                                 Product.class,
                                 IndexCoordinates.of(PRODUCT_INDEX));
 
-        return productHits.toList();
+
+        productHits.forEach(searchHit->{
+            productMatches.add(searchHit.getContent());
+        });
+        return productMatches;
+    }
+
+    // search by multiple field
+    public List<Product> processSearch(final String query) {
+        log.info("Search with query {}", query);
+
+        // 1. Create query on multiple fields enabling fuzzy search
+        QueryBuilder queryBuilder =
+                QueryBuilders
+                        .multiMatchQuery(query, "name", "description")
+                        .fuzziness(Fuzziness.AUTO);
+
+        Query searchQuery = new NativeSearchQueryBuilder()
+                .withFilter(queryBuilder)
+                .build();
+
+        // 2. Execute search
+        SearchHits<Product> productHits =
+                elasticsearchOperations
+                        .search(searchQuery, Product.class,
+                                IndexCoordinates.of(PRODUCT_INDEX));
+
+        // 3. Map searchHits to product list
+        List<Product> productMatches = new ArrayList<>();
+        productHits.forEach(searchHit->{
+            productMatches.add(searchHit.getContent());
+        });
+        return productMatches;
     }
 }

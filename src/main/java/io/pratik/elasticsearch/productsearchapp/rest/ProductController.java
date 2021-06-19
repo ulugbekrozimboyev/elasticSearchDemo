@@ -31,12 +31,17 @@ public class ProductController {
     }
 
     @GetMapping("/search/{manufacture}")
-    public List<?> searchProducts(@PathVariable String manufacture){
+    public List<Product> searchProducts(@PathVariable String manufacture){
         return productSearchService.findProductsByBrandByCriteria(manufacture);
     }
 
+    @GetMapping("/search-by-name/{name}")
+    public List<Product> searchProductsByName(@PathVariable String name){
+        return productSearchService.processSearch(name);
+    }
+
     @GetMapping("/search")
-    public List<?> searchProducts(){
+    public List<Product> searchProducts(){
         return productSearchService.findProductsByBrandByCriteria(null);
     }
 
