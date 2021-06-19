@@ -2,10 +2,7 @@ package io.pratik.elasticsearch.productsearchapp.rest;
 
 import io.pratik.elasticsearch.productsearchapp.documents.Product;
 import io.pratik.elasticsearch.productsearchapp.services.ProductSearchService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -31,6 +28,16 @@ public class ProductController {
     @PostMapping("/add-list")
     public List<?> addProducts(@RequestBody List<Product> products){
         return productSearchService.createProductIndexBulk(products);
+    }
+
+    @GetMapping("/search/{manufacture}")
+    public List<?> searchProducts(@PathVariable String manufacture){
+        return productSearchService.findProductsByBrandByCriteria(manufacture);
+    }
+
+    @GetMapping("/search")
+    public List<?> searchProducts(){
+        return productSearchService.findProductsByBrandByCriteria(null);
     }
 
 }
